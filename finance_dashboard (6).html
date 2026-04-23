@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fynd Finance Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy:   #0f172a;
+    --navy2:  #1e293b;
+    --orange: #f97316;
+    --blue:   #3b82f6;
+    --purple: #8b5cf6;
+    --green:  #10b981;
+    --red:    #ef4444;
+    --bg:     #f1f5f9;
+    --card:   #ffffff;
+    --border: #e2e8f0;
+    --text:   #1e293b;
+    --muted:  #64748b;
+    --mono:   'DM Mono', monospace;
+    --sans:   'Sora', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: var(--navy);
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .header-brand { color: #fff; }
+  .header-brand .sub { font-size: 10px; color: #64748b; letter-spacing: 2px; text-transform: uppercase; font-family: var(--mono); }
+  .header-brand .title { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .search-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .search-box {
+    display: flex; align-items: center; background: #1e293b;
+    border: 1px solid #334155; border-radius: 8px; overflow: hidden;
+  }
+  .search-box input {
+    background: none; border: none; outline: none; color: #fff;
+    padding: 8px 12px; font-family: var(--mono); font-size: 13px; width: 130px;
+  }
+  .search-box input::placeholder { color: #475569; }
+  .search-box button {
+    background: var(--orange); border: none; cursor: pointer;
+    padding: 8px 14px; color: #fff; font-size: 14px; transition: opacity .2s;
+  }
+  .search-box button:hover { opacity: .85; }
+
+  .date-wrap { display: flex; align-items: center; gap: 8px; }
+  .date-wrap input {
+    background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+    color: #fff; padding: 7px 10px; font-family: var(--mono); font-size: 12px; outline: none;
+  }
+  .date-wrap label { font-size: 11px; color: #64748b; font-family: var(--mono); }
+  .btn-apply {
+    background: var(--blue); color: #fff; border: none; border-radius: 6px;
+    padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: var(--sans);
+    font-weight: 600; transition: opacity .2s;
+  }
+  .btn-apply:hover { opacity: .85; }
+
+  .quick-btns { display: flex; gap: 6px; }
+  .qbtn {
+    background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+    border-radius: 5px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+    font-family: var(--mono); transition: all .15s;
+  }
+  .qbtn:hover, .qbtn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  /* BRAND CHIP */
+  .brand-bar {
+    background: #1e293b; padding: 8px 28px;
+    display: flex; align-items: center; gap: 10px; font-size: 12px;
+    font-family: var(--mono); color: #94a3b8; display: none;
+  }
+  .brand-chip {
+    background: #0f172a; border: 1px solid #334155; border-radius: 20px;
+    padding: 3px 12px; color: #38bdf8; font-size: 11px;
+  }
+
+  /* TABS */
+  .tabs {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 0 28px; display: flex; gap: 0;
+  }
+  .tab {
+    padding: 13px 20px; background: none; border: none; cursor: pointer;
+    font-size: 13px; font-family: var(--sans); font-weight: 400;
+    color: var(--muted); border-bottom: 2.5px solid transparent; transition: all .15s;
+  }
+  .tab.active { font-weight: 700; color: var(--navy); border-bottom-color: var(--navy); }
+  .tab:hover { color: var(--navy); }
+
+  /* CONTENT */
+  .content { padding: 24px 28px; max-width: 1300px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 80px 20px;
+  }
+  .empty-icon { font-size: 56px; margin-bottom: 16px; }
+  .empty-state h2 { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .empty-state p { color: var(--muted); font-size: 14px; font-family: var(--mono); }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 60px; color: var(--muted); font-family: var(--mono); font-size: 13px; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--blue); border-radius: 50%;
+    animation: spin .7s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ERROR */
+  .error-box {
+    background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+    padding: 16px 20px; color: var(--red); font-family: var(--mono); font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* KPI CARDS */
+  .kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+  .kpi {
+    background: var(--card); border-radius: 12px; padding: 18px 22px;
+    flex: 1; min-width: 180px; border-left: 4px solid;
+    box-shadow: 0 1px 8px rgba(0,0,0,.06);
+    animation: fadeUp .4s ease both;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .kpi .kpi-label { font-size: 10px; font-family: var(--mono); color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .kpi .kpi-val { font-size: 24px; font-weight: 700; font-family: var(--mono); letter-spacing: -1px; }
+  .kpi .kpi-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 4px; }
+
+  /* GRID */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid2.left-wide { grid-template-columns: 3fr 2fr; }
+  @media(max-width:900px) { .grid2, .grid2.left-wide { grid-template-columns: 1fr; } }
+
+  /* CARDS */
+  .card {
+    background: var(--card); border-radius: 12px; padding: 18px 20px;
+    border: 1px solid var(--border); box-shadow: 0 1px 8px rgba(0,0,0,.04);
+    margin-bottom: 14px;
+  }
+  .card-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 14px;
+  }
+  .card-title .dot { width: 4px; height: 18px; border-radius: 2px; }
+
+  /* NET CARD */
+  .net-card {
+    background: #f5f3ff; border: 2px solid var(--purple); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  .net-card .big { font-size: 30px; font-weight: 700; color: var(--purple); font-family: var(--mono); letter-spacing: -1px; margin: 6px 0; }
+  .net-card .formula { font-size: 11px; color: #7c3aed; font-family: var(--mono); margin-bottom: 8px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono); }
+  .badge.red { background: #fee2e2; color: var(--red); }
+  .badge.green { background: #d1fae5; color: var(--green); }
+
+  /* TABLE */
+  .tbl-wrap { overflow-x: auto; }
+  .tbl-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .tbl-search {
+    background: #f8fafc; border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 12px; font-family: var(--mono); outline: none; width: 180px;
+  }
+  .btn-csv {
+    background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 12px; font-size: 11px; cursor: pointer; font-family: var(--mono);
+    color: var(--muted); transition: all .15s;
+  }
+  .btn-csv:hover { background: var(--green); color: #fff; border-color: var(--green); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--mono); }
+  thead tr { background: #f8fafc; }
+  th {
+    padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 600;
+    letter-spacing: .5px; text-transform: uppercase; color: var(--muted);
+    border-bottom: 2px solid; white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  th:hover { color: var(--navy); }
+  td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; color: var(--text); white-space: nowrap; }
+  tr:hover td { background: #f8fafc; }
+  .text-right { text-align: right !important; }
+  tfoot td { font-weight: 700; background: #f8fafc !important; border-top: 2px solid; }
+
+  /* SUB TABS */
+  .sub-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .stab {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-family: var(--mono);
+    cursor: pointer; border: 1px solid var(--border); background: #f8fafc; color: var(--muted);
+    transition: all .15s;
+  }
+  .stab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* PAGINATION */
+  .pagination { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; align-items: center; font-size: 12px; font-family: var(--mono); color: var(--muted); }
+  .pgbtn { background: #f1f5f9; border: 1px solid var(--border); border-radius: 5px; padding: 4px 10px; cursor: pointer; font-family: var(--mono); font-size: 11px; }
+  .pgbtn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .pgbtn:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="sub">Fynd Finance Ops</div>
+    <div class="title">Brand Ledger Dashboard</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;">
+    <div class="search-wrap">
+      <div class="search-box">
+        <input type="number" id="cid-input" placeholder="Company ID e.g. 3557" />
+        <button onclick="loadDashboard()">🔍</button>
+      </div>
+      <div class="date-wrap">
+        <label>From</label>
+        <input type="date" id="date-from" />
+        <label>To</label>
+        <input type="date" id="date-to" />
+        <button class="btn-apply" onclick="loadDashboard()">Apply</button>
+      </div>
+    </div>
+    <div class="quick-btns">
+      <button class="qbtn" onclick="setQuick('tm')">This Month</button>
+      <button class="qbtn" onclick="setQuick('lm')">Last Month</button>
+      <button class="qbtn" onclick="setQuick('3m')">Last 3M</button>
+      <button class="qbtn active" onclick="setQuick('fy26')">FY26</button>
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#475569;font-family:var(--mono);text-align:right;">
+    <div id="header-date">—</div>
+    <div id="header-refresh" style="margin-top:3px;"></div>
+  </div>
+</div>
+
+<!-- BRAND BAR -->
+<div class="brand-bar" id="brand-bar">
+  <span>Showing data for</span>
+  <span class="brand-chip" id="brand-chip">—</span>
+  <span id="date-range-label" style="color:#475569;">—</span>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('summary',this)">📊 Summary</button>
+  <button class="tab" onclick="switchTab('receivable',this)">🔴 Receivable</button>
+  <button class="tab" onclick="switchTab('payable',this)">🔵 Payable</button>
+  <button class="tab" onclick="switchTab('settled',this)">🟢 Settled</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content" id="content">
+  <div class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h2>Enter a Company ID to load the ledger</h2>
+    <p>Type a company ID in the search box above and press the search button</p>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG — paste your Google Sheet ID here
+// ─────────────────────────────────────────────────────────────────────────────
+const SHEET_ID = "1xlOtJHcMz3f8YhybDhytDfFrbpl0B6UtMo5yhHuxWwI";
+
+// Sheet tab names (must match exactly what you named them in Google Sheets)
+const TABS = {
+  receivable:     "receivable",
+  payable_bags:   "payable_bags",
+  payable_claims: "payable_claims",
+  settled_bags:   "settled_bags",
+  settled_claims: "settled_claims",
+};
+
+// GID of each tab — found in the URL when you click each tab (#gid=XXXXXXX)
+const TAB_GIDS = {
+  receivable:     0,
+  payable_bags:   1403939472,
+  payable_claims: 933879956,
+  settled_bags:   901703576,
+  settled_claims: 150845138,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let STATE = {
+  companyId:   null,
+  brandName:   "",
+  dateFrom:    "",
+  dateTo:      "",
+  activeTab:   "summary",
+  data:        {},
+  sortCol:     {},
+  sortAsc:     {},
+  page:        {},
+  subTab:      { payable: "bags", settled: "bags" },
+  tableSearch: {},
+};
+const PAGE_SIZE = 50;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATE HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function today()   { return new Date().toISOString().slice(0,10); }
+function addDays(d, n) { let x = new Date(d); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); }
+
+function setQuick(q) {
+  document.querySelectorAll('.qbtn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const now = new Date();
+  let from, to = today();
+  if (q === 'tm') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  } else if (q === 'lm') {
+    const lm = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    from = lm.toISOString().slice(0,10);
+    to   = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0,10);
+  } else if (q === '3m') {
+    from = addDays(today(), -90);
+  } else if (q === 'fy26') {
+    from = "2025-04-01"; to = "2026-03-31";
+  }
+  document.getElementById('date-from').value = from;
+  document.getElementById('date-to').value   = to;
+}
+
+// Init default dates to FY26
+(function() {
+  document.getElementById('date-from').value = "2025-04-01";
+  document.getElementById('date-to').value   = "2026-03-31";
+  document.getElementById('header-date').textContent = "Today: " + today();
+})();
+
+// Enter key triggers search
+document.getElementById('cid-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadDashboard();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FETCH GOOGLE SHEET TAB → parse to array of objects
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchSheet(tabName) {
+  if (SHEET_ID === "YOUR_GOOGLE_SHEET_ID_HERE") {
+    return getDemoData(tabName);
+  }
+
+  const gid = TAB_GIDS[tabName];
+  
+  // Use published CSV URL — this is the most reliable method
+  // Works because sheet is already published to web
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?gid=${gid}&single=true&output=csv`;
+  
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    return csvToObjects(text);
+  } catch(e) {
+    // If cors fails, try no-cors with a proxy
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    const res2 = await fetch(proxy);
+    if (!res2.ok) throw new Error('Proxy failed too');
+    const text2 = await res2.text();
+    return csvToObjects(text2);
+  }
+}
+
+function csvToObjects(csv) {
+  const lines  = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = parseCsvLine(lines[0]).map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const vals = parseCsvLine(line);
+    const obj  = {};
+    headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^"|"$/g,'').trim(); });
+    return obj;
+  });
+}
+
+function parseCsvLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTER by company_id and date range
+// ─────────────────────────────────────────────────────────────────────────────
+function getCidField(row) {
+  // Try all known variations of company id column name
+  const keys = Object.keys(row || {});
+  const match = keys.find(k =>
+    k.toLowerCase().replace(/[\s_-]/g,'') === 'companyid'
+  );
+  return match || 'company_id';
+}
+
+function filterRows(rows, cidField, dateField) {
+  if (!rows || rows.length === 0) return [];
+  return rows.filter(r => {
+    // Use per-row detection in case cidField was wrong
+    const actualField = r[cidField] !== undefined ? cidField : getCidField(r);
+    const cidVal  = String(r[actualField] || '').trim();
+    const cidMatch = cidVal === String(STATE.companyId).trim();
+    let dateMatch  = true;
+    if (dateField && STATE.dateFrom && r[dateField]) {
+      const dv = String(r[dateField]).slice(0,10);
+      dateMatch = dv >= STATE.dateFrom;
+    }
+    if (dateField && STATE.dateTo && r[dateField]) {
+      const dv = String(r[dateField]).slice(0,10);
+      dateMatch = dateMatch && dv <= STATE.dateTo;
+    }
+    return cidMatch && dateMatch;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NUMBER FORMAT ₹ Indian
+// ─────────────────────────────────────────────────────────────────────────────
+function fmt(n) {
+  const num = parseFloat(n) || 0;
+  return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function fmtN(n) { return (parseFloat(n)||0).toLocaleString('en-IN'); }
+function sum(arr, key) { return arr.reduce((a,r) => a + (parseFloat(r[key])||0), 0); }
+
+// Try multiple possible column names, return first match sum
+function sumAny(arr, keys) {
+  if (!arr || arr.length === 0) return 0;
+  const actualKey = keys.find(k => arr.some(r => r[k] !== undefined && r[k] !== ''));
+  return actualKey ? sum(arr, actualKey) : 0;
+}
+
+// Detect date column name dynamically
+function getDateField(row, type) {
+  const keys = Object.keys(row || {});
+  if (type === 'invoice') {
+    return keys.find(k => k.toLowerCase().replace(/[_\s]/g,'').includes('invoicedate')) || 'Invoice_Date';
+  }
+  if (type === 'payment') {
+    return keys.find(k => k.toLowerCase().replace(/[_\s]/g,'').includes('paymentdate') || k.toLowerCase().replace(/[_\s]/g,'').includes('paydate')) || 'payment_date';
+  }
+  return keys[0];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN LOAD
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const cid = document.getElementById('cid-input').value.trim();
+  if (!cid) { alert('Please enter a Company ID'); return; }
+
+  STATE.companyId = cid;
+  STATE.dateFrom  = document.getElementById('date-from').value;
+  STATE.dateTo    = document.getElementById('date-to').value;
+
+  showLoading();
+
+  try {
+    const [rec, pb, pc, sb, sc] = await Promise.all([
+      fetchSheet(TABS.receivable),
+      fetchSheet(TABS.payable_bags),
+      fetchSheet(TABS.payable_claims),
+      fetchSheet(TABS.settled_bags),
+      fetchSheet(TABS.settled_claims),
+    ]);
+
+    // Detect company_id column name using robust helper
+    const recRows = filterRows(rec, getCidField(rec[0]||{}), getDateField(rec[0]||{},'invoice'));
+    const pbRows  = filterRows(pb,  getCidField(pb[0]||{}),  null);
+    const pcRows  = filterRows(pc,  getCidField(pc[0]||{}),  null);
+    const sbRows  = filterRows(sb,  getCidField(sb[0]||{}),  getDateField(sb[0]||{},'payment'));
+    const scRows  = filterRows(sc,  getCidField(sc[0]||{}),  getDateField(sc[0]||{},'payment'));
+
+    // Brand name — search all raw rows for a matching company ID
+    const allRaw = [...rec, ...pb, ...sb];
+    const brandRow = allRaw.find(r => {
+      const f = getCidField(r);
+      return String(r[f]||'').trim() === String(cid).trim();
+    });
+    STATE.brandName = brandRow
+      ? (brandRow['company_name'] || brandRow['Company_Name'] ||
+         brandRow['Seller_Name']  || brandRow['seller_name']  ||
+         `Company ${cid}`)
+      : `Company ${cid}`;
+
+    // Only open invoices for receivable
+    const openRec = recRows.filter(r => (r['STATUS']||r['status']||r['Status']||'OPEN').toUpperCase().trim() === 'OPEN');
+
+    // If no data found for this company ID — show clear message
+    const totalRows = openRec.length + pbRows.length + pcRows.length + sbRows.length + scRows.length;
+    if (totalRows === 0) {
+      document.getElementById('content').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h2>No data found for Company ID ${cid}</h2>
+          <p style="margin-top:8px">No records found for Company ID ${cid}. Please check the ID and try again.</p>
+        </div>`;
+      document.getElementById('brand-bar').style.display = 'none';
+      return;
+    }
+
+    STATE.data = {
+      receivable:     openRec,
+      payable_bags:   pbRows,
+      payable_claims: pcRows,
+      settled_bags:   sbRows,
+      settled_claims: scRows,
+    };
+
+    // Show brand bar
+    const bar = document.getElementById('brand-bar');
+    bar.style.display = 'flex';
+    document.getElementById('brand-chip').textContent = `${STATE.brandName} · ID ${cid}`;
+    document.getElementById('date-range-label').textContent =
+      STATE.dateFrom && STATE.dateTo ? `${STATE.dateFrom} → ${STATE.dateTo}` : 'All dates';
+    document.getElementById('header-refresh').textContent = 'Loaded: ' + new Date().toLocaleTimeString();
+
+    renderActiveTab();
+
+  } catch(e) {
+    document.getElementById('content').innerHTML =
+      `<div class="error-box">⚠️ Error loading data: ${e.message}<br><br>
+       <small>Two things needed: 1) Sheet must be published (File → Share → Publish to web) 2) Sheet must be shared publicly (Share button → Anyone with the link → Viewer). Also check TAB_GIDS are correct in the HTML file.</small></div>`;
+  }
+}
+
+function showLoading() {
+  document.getElementById('content').innerHTML =
+    `<div class="loading"><div class="spinner"></div>Loading data for Company ${STATE.companyId}...</div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  STATE.activeTab = tab;
+  if (STATE.companyId && Object.keys(STATE.data).length) renderActiveTab();
+}
+
+function renderActiveTab() {
+  const t = STATE.activeTab;
+  if (t === 'summary')    renderSummary();
+  else if (t === 'receivable') renderReceivable();
+  else if (t === 'payable')    renderPayable();
+  else if (t === 'settled')    renderSettled();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUMMARY TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSummary() {
+  const d  = STATE.data;
+  const totalRec     = sumAny(d.receivable,  ['Invoice_Amount','invoice_amount','Outstanding_Amount']);
+  const totalPB      = sum(d.payable_bags,   'bca');
+  const totalPC      = sum(d.payable_claims, 'claimable_amt');
+  const totalPayable = totalPB + totalPC;
+  const netRec       = totalRec - totalPayable;
+  const totalSB      = sumAny(d.settled_bags, ['net_payout','Net_Payout','paid_amt']);
+  const totalSC      = sum(d.settled_claims, 'claimable_amt');
+  const totalSettled = totalSB + totalSC;
+
+  let html = `
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:var(--orange);animation-delay:.0s">
+      <div class="kpi-label">Total Receivable from Brand</div>
+      <div class="kpi-val" style="color:var(--orange)">${fmt(totalRec)}</div>
+      <div class="kpi-sub">${d.receivable.length} open invoices</div>
+    </div>
+    <div class="kpi" style="border-color:var(--blue);animation-delay:.1s">
+      <div class="kpi-label">Total Payable by Fynd</div>
+      <div class="kpi-val" style="color:var(--blue)">${fmt(totalPayable)}</div>
+      <div class="kpi-sub">Seller sale + Claims</div>
+    </div>
+    <div class="kpi" style="border-color:var(--purple);animation-delay:.2s">
+      <div class="kpi-label">Net Receivable from Brand</div>
+      <div class="kpi-val" style="color:var(--purple)">${fmt(netRec)}</div>
+      <div class="kpi-sub">Receivable − Payable</div>
+    </div>
+    <div class="kpi" style="border-color:var(--green);animation-delay:.3s">
+      <div class="kpi-label">Total Settled Till Date</div>
+      <div class="kpi-val" style="color:var(--green)">${fmt(totalSettled)}</div>
+      <div class="kpi-sub">All settlements</div>
+    </div>
+  </div>
+
+  <div class="grid2 left-wide">
+    <div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--orange)"></div>Outstanding Receivable from Brand</div>
+        ${buildTable('sum_rec', d.receivable,
+          ['Invoice No','Seller','Channel','Type','Invoice Date','Due Date','Amount'],
+          ['Invoice_No','Seller_Name','Channel','Transaction_Type','Invoice_Date','Due_Date','Invoice_Amount'],
+          {amountCols:['Invoice_Amount'], footerCol:'Invoice_Amount', footerLabel:'Grand Total'}
+        )}
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--blue)"></div>Outstanding Payable by Fynd</div>
+        <table>
+          <thead><tr>
+            <th style="border-bottom-color:var(--blue)">Type</th>
+            <th style="border-bottom-color:var(--blue)" class="text-right">Amount</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Seller Sale</td><td class="text-right">${fmt(totalPB)}</td></tr>
+            <tr><td>Claims</td><td class="text-right">${fmt(totalPC)}</td></tr>
+          </tbody>
+          <tfoot><tr>
+            <td style="border-top-color:var(--blue)">Total Payable</td>
+            <td class="text-right" style="border-top-color:var(--blue);color:var(--blue)">${fmt(totalPayable)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+
+      <div class="net-card">
+        <div class="card-title" style="margin-bottom:4px"><div class="dot" style="background:var(--purple)"></div>Net Receivable from Brand</div>
+        <div class="big">${fmt(netRec)}</div>
+        <div class="formula">${fmt(totalRec)} (Receivable) − ${fmt(totalPayable)} (Payable)</div>
+        <span class="badge ${netRec >= 0 ? 'red' : 'green'}">${netRec >= 0 ? '🔴 Brand Owes Fynd' : '🟢 Fynd Owes Brand'}</span>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--green)"></div>Total Settlement Till Date</div>
+        <table>
+          <thead><tr>
+            <th style="border-bottom-color:var(--green)">Type</th>
+            <th style="border-bottom-color:var(--green)" class="text-right">Settled Amount</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Seller Sale</td><td class="text-right">${fmt(totalSB)}</td></tr>
+            <tr><td>Claims</td><td class="text-right">${fmt(totalSC)}</td></tr>
+          </tbody>
+          <tfoot><tr>
+            <td style="border-top-color:var(--green)">Total Settled</td>
+            <td class="text-right" style="border-top-color:var(--green);color:var(--green)">${fmt(totalSettled)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECEIVABLE TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderReceivable() {
+  const rows  = STATE.data.receivable;
+  const total = sumAny(rows, ['Invoice_Amount','invoice_amount','Outstanding_Amount']);
+  const oldest = rows.reduce((a,r) => { const d = r['Due_Date']||r['due_date']||''; return (!a || (d && d < a)) ? d : a; }, null);
+
+  document.getElementById('content').innerHTML = `
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:var(--orange)">
+      <div class="kpi-label">Total Receivable</div>
+      <div class="kpi-val" style="color:var(--orange)">${fmt(total)}</div>
+      <div class="kpi-sub">${rows.length} open invoices</div>
+    </div>
+    <div class="kpi" style="border-color:var(--red)">
+      <div class="kpi-label">Oldest Due Date</div>
+      <div class="kpi-val" style="color:var(--red);font-size:18px">${oldest || '—'}</div>
+      <div class="kpi-sub">Earliest pending invoice</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="dot" style="background:var(--orange)"></div>Open Invoices</div>
+    ${buildTable('rec', rows,
+      ['Invoice No','Seller','Channel','Type','Invoice Date','Due Date','Amount','Outstanding'],
+      ['Invoice_No','Seller_Name','Channel','Transaction_Type','Invoice_Date','Due_Date','Invoice_Amount','Outstanding_Amount'],
+      {amountCols:['Invoice_Amount','Outstanding_Amount'], footerCol:'Invoice_Amount', footerLabel:'Grand Total', search:true, csv:true, accentColor:'var(--orange)'}
+    )}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYABLE TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderPayable(sub) {
+  const s    = sub || STATE.subTab.payable;
+  STATE.subTab.payable = s;
+  const pb   = STATE.data.payable_bags;
+  const pc   = STATE.data.payable_claims;
+  const totB = sum(pb, 'bca');
+  const totC = sum(pc, 'claimable_amt');
+
+  let tableHtml = s === 'bags'
+    ? buildTable('pb', pb,
+        ['Bag ID','Order ID','SKU','BCA','ESP','MRP','Expected Payout','Settlement ID','Type'],
+        ['bag_id','order_id','sku_code','bca','esp','mrp','expected_payout_date','sett_id','transaction_type'],
+        {amountCols:['bca','esp','mrp'], footerCol:'bca', footerLabel:'Total BCA', search:true, csv:true, accentColor:'var(--blue)'}
+      )
+    : buildTable('pc', pc,
+        ['Order ID','Claimable Amt','Claim Settle Date','Settlement ID','Status'],
+        ['order_id','claimable_amt','claim_settle_date','sett_id','recon_status'],
+        {amountCols:['claimable_amt'], footerCol:'claimable_amt', footerLabel:'Total Claims', search:true, csv:true, accentColor:'var(--blue)'}
+      );
+
+  document.getElementById('content').innerHTML = `
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:var(--blue)">
+      <div class="kpi-label">Payable — Seller Sale</div>
+      <div class="kpi-val" style="color:var(--blue)">${fmt(totB)}</div>
+      <div class="kpi-sub">${pb.length} bags</div>
+    </div>
+    <div class="kpi" style="border-color:#0891b2">
+      <div class="kpi-label">Payable — Claims</div>
+      <div class="kpi-val" style="color:#0891b2">${fmt(totC)}</div>
+      <div class="kpi-sub">${pc.length} claims</div>
+    </div>
+    <div class="kpi" style="border-color:var(--navy)">
+      <div class="kpi-label">Total Payable by Fynd</div>
+      <div class="kpi-val" style="color:var(--navy)">${fmt(totB+totC)}</div>
+      <div class="kpi-sub">Seller sale + Claims</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sub-tabs">
+      <button class="stab ${s==='bags'?'active':''}" onclick="renderPayable('bags')">Payable Bags</button>
+      <button class="stab ${s==='claims'?'active':''}" onclick="renderPayable('claims')">Payable Claims</button>
+    </div>
+    ${tableHtml}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SETTLED TAB
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSettled(sub) {
+  const s    = sub || STATE.subTab.settled;
+  STATE.subTab.settled = s;
+  const sb   = STATE.data.settled_bags;
+  const sc   = STATE.data.settled_claims;
+  const totB = sum(sb, 'net_payout') || sum(sb, 'Net_Payout');
+  const totC = sum(sc, 'claimable_amt');
+
+  let tableHtml = s === 'bags'
+    ? buildTable('sb', sb,
+        ['Bag ID','Order ID','Type','MRP','ESP','Net Payout','UTR','Payment Date','Payout ID'],
+        ['bag_id','order_id','transaction_type','mrp','esp','net_payout','utr','payment_date','payout_id'],
+        {amountCols:['mrp','esp','net_payout'], footerCol:'net_payout', footerLabel:'Total Net Payout', search:true, csv:true, accentColor:'var(--green)'}
+      )
+    : buildTable('sc', sc,
+        ['Order ID','Claimable Amt','Payout ID','UTR','Payment Date'],
+        ['order_id','claimable_amt','payout_id','utr','payment_date'],
+        {amountCols:['claimable_amt'], footerCol:'claimable_amt', footerLabel:'Total Claims Settled', search:true, csv:true, accentColor:'var(--green)'}
+      );
+
+  document.getElementById('content').innerHTML = `
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:var(--green)">
+      <div class="kpi-label">Settled — Seller Sale</div>
+      <div class="kpi-val" style="color:var(--green)">${fmt(totB)}</div>
+      <div class="kpi-sub">${sb.length} bags</div>
+    </div>
+    <div class="kpi" style="border-color:#0d9488">
+      <div class="kpi-label">Settled — Claims</div>
+      <div class="kpi-val" style="color:#0d9488">${fmt(totC)}</div>
+      <div class="kpi-sub">${sc.length} claims</div>
+    </div>
+    <div class="kpi" style="border-color:var(--navy)">
+      <div class="kpi-label">Total Settled Till Date</div>
+      <div class="kpi-val" style="color:var(--navy)">${fmt(totB+totC)}</div>
+      <div class="kpi-sub">All settlements</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sub-tabs">
+      <button class="stab ${s==='bags'?'active':''}" onclick="renderSettled('bags')">Settled Bags</button>
+      <button class="stab ${s==='claims'?'active':''}" onclick="renderSettled('claims')">Settled Claims</button>
+    </div>
+    ${tableHtml}
+  </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE BUILDER — reusable, sortable, searchable, paginated, CSV export
+// ─────────────────────────────────────────────────────────────────────────────
+function buildTable(id, rawRows, headers, fields, opts={}) {
+  const { amountCols=[], footerCol, footerLabel, search, csv, accentColor='var(--navy)' } = opts;
+  const key = id;
+
+  // Search filter
+  const q = (STATE.tableSearch[key]||'').toLowerCase();
+  let rows = q
+    ? rawRows.filter(r => fields.some(f => String(r[f]||'').toLowerCase().includes(q)))
+    : rawRows;
+
+  // Sort
+  const sc = STATE.sortCol[key];
+  const sa = STATE.sortAsc[key] !== false;
+  if (sc) {
+    rows = [...rows].sort((a,b) => {
+      const av = a[sc], bv = b[sc];
+      const an = parseFloat(av), bn = parseFloat(bv);
+      const cmp = !isNaN(an)&&!isNaN(bn) ? an-bn : String(av||'').localeCompare(String(bv||''));
+      return sa ? cmp : -cmp;
+    });
+  }
+
+  // Pagination
+  const pg   = STATE.page[key] || 0;
+  const total = rows.length;
+  const paged = rows.slice(pg*PAGE_SIZE, (pg+1)*PAGE_SIZE);
+  const totPages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+
+  const footTotal = footerCol ? sum(rows, footerCol) : 0;
+
+  let html = `<div class="tbl-top">`;
+  if (search) html += `<input class="tbl-search" placeholder="Search…" value="${STATE.tableSearch[key]||''}"
+    oninput="STATE.tableSearch['${key}']=this.value;STATE.page['${key}']=0;renderActiveTab()" />`;
+  else html += `<div></div>`;
+  if (csv) html += `<button class="btn-csv" onclick="exportCSV('${key}',${JSON.stringify(headers)},${JSON.stringify(fields)})">⬇ Export CSV</button>`;
+  html += `</div><div class="tbl-wrap"><table><thead><tr>`;
+
+  headers.forEach((h, i) => {
+    const f = fields[i];
+    const isAmt = amountCols.includes(f);
+    const arrow = STATE.sortCol[key]===f ? (STATE.sortAsc[key]!==false?'↑':'↓') : '';
+    html += `<th style="border-bottom-color:${accentColor};${isAmt?'text-align:right':''}"
+      onclick="sortTable('${key}','${f}')">${h} ${arrow}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+  if (paged.length === 0) {
+    html += `<tr><td colspan="${headers.length}" style="text-align:center;color:var(--muted);padding:24px;">No data found</td></tr>`;
+  }
+  paged.forEach(r => {
+    html += `<tr>`;
+    fields.forEach(f => {
+      const isAmt = amountCols.includes(f);
+      const val   = r[f] !== undefined ? r[f] : (r[f.toLowerCase()] !== undefined ? r[f.toLowerCase()] : '—');
+      html += `<td class="${isAmt?'text-right':''}">${isAmt ? fmt(val) : (val||'—')}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody>`;
+  if (footerCol && footTotal) {
+    html += `<tfoot><tr>`;
+    fields.forEach((f, i) => {
+      const isAmt = amountCols.includes(f);
+      if (i === 0) html += `<td style="border-top-color:${accentColor}">${footerLabel||'Total'}</td>`;
+      else if (f === footerCol) html += `<td class="text-right" style="border-top-color:${accentColor};color:${accentColor}">${fmt(footTotal)}</td>`;
+      else html += `<td style="border-top-color:${accentColor}"></td>`;
+    });
+    html += `</tr></tfoot>`;
+  }
+  html += `</table></div>`;
+
+  // Pagination
+  html += `<div class="pagination">
+    <span>${total} rows · Page ${pg+1} of ${totPages}</span>
+    <button class="pgbtn" ${pg===0?'disabled':''} onclick="setPage('${key}',${pg-1})">← Prev</button>
+    <button class="pgbtn" ${pg>=totPages-1?'disabled':''} onclick="setPage('${key}',${pg+1})">Next →</button>
+  </div>`;
+
+  return html;
+}
+
+function sortTable(key, field) {
+  if (STATE.sortCol[key] === field) STATE.sortAsc[key] = !STATE.sortAsc[key];
+  else { STATE.sortCol[key] = field; STATE.sortAsc[key] = true; }
+  STATE.page[key] = 0;
+  renderActiveTab();
+}
+
+function setPage(key, pg) {
+  STATE.page[key] = pg;
+  renderActiveTab();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
+function exportCSV(key, headers, fields) {
+  const rows = STATE.data[
+    key==='rec'||key==='sum_rec' ? 'receivable' :
+    key==='pb'  ? 'payable_bags'   :
+    key==='pc'  ? 'payable_claims' :
+    key==='sb'  ? 'settled_bags'   : 'settled_claims'
+  ] || [];
+
+  const q = (STATE.tableSearch[key]||'').toLowerCase();
+  const filtered = q ? rows.filter(r => fields.some(f => String(r[f]||'').toLowerCase().includes(q))) : rows;
+
+  const lines = [headers.join(',')];
+  filtered.forEach(r => {
+    lines.push(fields.map(f => `"${r[f]||''}"`).join(','));
+  });
+
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `${STATE.brandName}_${key}_${today()}.csv`;
+  a.click();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEMO DATA — multi-brand, filters correctly by company_id
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Known demo brands — add more here as needed
+const DEMO_BRANDS = {
+  '3557':  { name: 'Kaya Limited' },
+  '10549': { name: 'ZION Collective' },
+  '12170': { name: 'Atha Fashion' },
+};
+
+// All demo rows across all brands — dashboard filters by company_id automatically
+const DEMO_DB = {
+  receivable: [
+    // Kaya Limited - 3557
+    {company_id:'3557',Seller_Name:'Kaya Limited',channel:'Storefront',transaction_type:'Subscription',invoice_no:'FC-I-A01337-FY26',invoice_date:'2025-07-24',due_date:'2025-07-31',invoice_amount:'35400',status:'OPEN'},
+    {company_id:'3557',Seller_Name:'Kaya Limited',channel:'Storefront',transaction_type:'Delivery Fees',invoice_no:'FC-I-A01367-FY26',invoice_date:'2025-07-25',due_date:'2025-08-01',invoice_amount:'18895.98',status:'OPEN'},
+    {company_id:'3557',Seller_Name:'Kaya Limited',channel:'Konnect',transaction_type:'Subscription',invoice_no:'FC-I-A02373-FY26',invoice_date:'2025-09-26',due_date:'2025-10-03',invoice_amount:'35400',status:'OPEN'},
+    {company_id:'3557',Seller_Name:'Kaya Limited',channel:'Konnect',transaction_type:'Delivery Fees',invoice_no:'FC-I-A02656-FY26',invoice_date:'2025-10-17',due_date:'2025-10-24',invoice_amount:'9576.84',status:'OPEN'},
+    {company_id:'3557',Seller_Name:'Kaya Limited',channel:'Storefront',transaction_type:'Subscription',invoice_no:'FC-I-A03039-FY26',invoice_date:'2025-11-13',due_date:'2025-11-20',invoice_amount:'35400',status:'OPEN'},
+    // ZION - 10549
+    {company_id:'10549',Seller_Name:'ZION Collective',channel:'Storefront',transaction_type:'Subscription',invoice_no:'FC-I-B00101-FY26',invoice_date:'2025-08-01',due_date:'2025-08-08',invoice_amount:'25000',status:'OPEN'},
+    {company_id:'10549',Seller_Name:'ZION Collective',channel:'Konnect',transaction_type:'Delivery Fees',invoice_no:'FC-I-B00202-FY26',invoice_date:'2025-09-10',due_date:'2025-09-17',invoice_amount:'8500',status:'OPEN'},
+    // Atha Fashion - 12170
+    {company_id:'12170',Seller_Name:'Atha Fashion',channel:'Storefront',transaction_type:'Subscription',invoice_no:'FC-I-C00301-FY26',invoice_date:'2025-07-15',due_date:'2025-07-22',invoice_amount:'47200',status:'OPEN'},
+    {company_id:'12170',Seller_Name:'Atha Fashion',channel:'Storefront',transaction_type:'Delivery Fees',invoice_no:'FC-I-C00302-FY26',invoice_date:'2025-08-20',due_date:'2025-08-27',invoice_amount:'12300',status:'OPEN'},
+    {company_id:'12170',Seller_Name:'Atha Fashion',channel:'Konnect',transaction_type:'Transaction',invoice_no:'FC-I-C00303-FY26',invoice_date:'2025-10-05',due_date:'2025-10-12',invoice_amount:'35400',status:'OPEN'},
+    {company_id:'12170',Seller_Name:'Atha Fashion',channel:'Konnect',transaction_type:'Subscription',invoice_no:'FC-I-C00304-FY26',invoice_date:'2025-11-18',due_date:'2025-11-25',invoice_amount:'35400',status:'OPEN'},
+    {company_id:'12170',Seller_Name:'Atha Fashion',channel:'Storefront',transaction_type:'Delivery Fees',invoice_no:'FC-I-C00305-FY26',invoice_date:'2025-12-10',due_date:'2025-12-17',invoice_amount:'9800',status:'OPEN'},
+  ],
+  payable_bags: [
+    // Kaya - 3557
+    {company_id:'3557',company_name:'Kaya Limited',bag_id:'43456947',order_id:'FY6860A07E13E7D6F7FD',sku_code:'/710178',bca:'1043',esp:'1043',mrp:'1490',expected_payout_date:'2025-07-14',sett_id:'3557_OE_COD_AC_NC_188_FY26',transaction_type:'Sale'},
+    {company_id:'3557',company_name:'Kaya Limited',bag_id:'43535939',order_id:'FY6865113713D5B4A2FC',sku_code:'/706771',bca:'725',esp:'725',mrp:'1450',expected_payout_date:'2025-07-14',sett_id:'3557_OE_COD_AC_NC_187_FY26',transaction_type:'Sale'},
+    {company_id:'3557',company_name:'Kaya Limited',bag_id:'43596901',order_id:'FY6868306F138D1007C3',sku_code:'/710251',bca:'1480',esp:'1480',mrp:'1850',expected_payout_date:'2025-07-14',sett_id:'3557_OE_COD_AC_NC_188_FY26',transaction_type:'Sale'},
+    // ZION - 10549
+    {company_id:'10549',company_name:'ZION Collective',bag_id:'48585752',order_id:'FY695B6BA5017D466F',sku_code:'3154525_S',bca:'999',esp:'999',mrp:'1998',expected_payout_date:'2026-01-15',sett_id:'10549_OE_COD_AC_NC_001_FY26',transaction_type:'Sale'},
+    {company_id:'10549',company_name:'ZION Collective',bag_id:'48584561',order_id:'FY695B96D00191A58E',sku_code:'3154525_S',bca:'999',esp:'999',mrp:'1998',expected_payout_date:'2026-01-15',sett_id:'10549_OE_COD_AC_NC_002_FY26',transaction_type:'Sale'},
+    // Atha Fashion - 12170
+    {company_id:'12170',company_name:'Atha Fashion',bag_id:'55001001',order_id:'FY6990AA0011223344',sku_code:'ATH-KURTA-M',bca:'1200',esp:'1200',mrp:'2400',expected_payout_date:'2025-08-20',sett_id:'12170_OE_COD_AC_NC_001_FY26',transaction_type:'Sale'},
+    {company_id:'12170',company_name:'Atha Fashion',bag_id:'55001002',order_id:'FY6990AA0011223345',sku_code:'ATH-SAREE-RED',bca:'2500',esp:'2500',mrp:'4999',expected_payout_date:'2025-08-20',sett_id:'12170_OE_COD_AC_NC_001_FY26',transaction_type:'Sale'},
+    {company_id:'12170',company_name:'Atha Fashion',bag_id:'55001003',order_id:'FY6990AA0011223346',sku_code:'ATH-LEHENGA-L',bca:'3800',esp:'3800',mrp:'7500',expected_payout_date:'2025-09-05',sett_id:'12170_OE_COD_AC_NC_002_FY26',transaction_type:'Sale'},
+    {company_id:'12170',company_name:'Atha Fashion',bag_id:'55001004',order_id:'FY6990AA0011223347',sku_code:'ATH-DUPATTA-BL',bca:'650',esp:'650',mrp:'1299',expected_payout_date:'2025-09-05',sett_id:'12170_OE_COD_AC_NC_002_FY26',transaction_type:'Sale'},
+  ],
+  payable_claims: [
+    // Kaya - 3557
+    {company_id:'3557',order_id:'FY672258060E4B9AD69D',claimable_amt:'545',claim_settle_date:'2024-11-28',sett_id:'3557_OE_PPD_CL_CS_177_FY25',recon_status:'bag_lost'},
+    {company_id:'3557',order_id:'FY68A4AB3E136AB14D0A',claimable_amt:'1500',claim_settle_date:'2025-11-11',sett_id:'3557_OE_COD_AC_CS_218_FY26',recon_status:'bag_lost'},
+    // ZION - 10549
+    {company_id:'10549',order_id:'FY695B646451D3D71682',claimable_amt:'399',claim_settle_date:'2026-01-20',sett_id:'10549_OE_COD_AC_CS_001_FY26',recon_status:'bag_lost'},
+    // Atha Fashion - 12170
+    {company_id:'12170',order_id:'FY6990BB0022334455',claimable_amt:'2400',claim_settle_date:'2025-09-15',sett_id:'12170_OE_COD_AC_CS_001_FY26',recon_status:'bag_lost'},
+    {company_id:'12170',order_id:'FY6990BB0022334456',claimable_amt:'1299',claim_settle_date:'2025-10-01',sett_id:'12170_OE_COD_AC_CS_002_FY26',recon_status:'bag_lost'},
+  ],
+  settled_bags: [
+    // Kaya - 3557
+    {company_id:'3557',bag_id:'42121091',order_id:'FY67F3D2A50FB7DB0274',transaction_type:'Sale',mrp:'1050',esp:'525',net_payout:'525',utr:'_CMS5189711040',payment_date:'2025-07-16',payout_id:'3557_OE_COD_AC_SD_379_FY26'},
+    {company_id:'3557',bag_id:'37679897',order_id:'FY66FF7B060EF36878B3',transaction_type:'Sale',mrp:'1850',esp:'1295',net_payout:'1295',utr:'_CMS5345090721',payment_date:'2025-10-08',payout_id:'3557_OE_COD_AC_SD_397_FY26'},
+    {company_id:'3557',bag_id:'23249692',order_id:'FY64620757018E4C5612',transaction_type:'Sale',mrp:'1799',esp:'1529.15',net_payout:'1456.97',utr:'_314921696645',payment_date:'2023-05-29',payout_id:'3557_OE_COD_AC_SD_020_FY24'},
+    // ZION - 10549
+    {company_id:'10549',bag_id:'48585750',order_id:'FY695B6BA5017D466F',transaction_type:'Sale',mrp:'1998',esp:'999',net_payout:'909',utr:'_ZN001234',payment_date:'2026-01-10',payout_id:'10549_OE_COD_AC_SD_001_FY26'},
+    {company_id:'10549',bag_id:'48585751',order_id:'FY695B6BA5017D466F',transaction_type:'Sale',mrp:'4490',esp:'4490',net_payout:'4085',utr:'_ZN001235',payment_date:'2026-01-10',payout_id:'10549_OE_COD_AC_SD_001_FY26'},
+    // Atha Fashion - 12170
+    {company_id:'12170',bag_id:'54000001',order_id:'FY6980CC0033445566',transaction_type:'Sale',mrp:'2400',esp:'1200',net_payout:'1100',utr:'_ATH00101',payment_date:'2025-08-01',payout_id:'12170_OE_COD_AC_SD_001_FY26'},
+    {company_id:'12170',bag_id:'54000002',order_id:'FY6980CC0033445567',transaction_type:'Sale',mrp:'4999',esp:'2500',net_payout:'2300',utr:'_ATH00102',payment_date:'2025-08-05',payout_id:'12170_OE_COD_AC_SD_001_FY26'},
+    {company_id:'12170',bag_id:'54000003',order_id:'FY6980CC0033445568',transaction_type:'Sale',mrp:'7500',esp:'3800',net_payout:'3500',utr:'_ATH00103',payment_date:'2025-08-15',payout_id:'12170_OE_COD_AC_SD_002_FY26'},
+    {company_id:'12170',bag_id:'54000004',order_id:'FY6980CC0033445569',transaction_type:'Sale',mrp:'1299',esp:'650',net_payout:'590',utr:'_ATH00104',payment_date:'2025-08-15',payout_id:'12170_OE_COD_AC_SD_002_FY26'},
+    {company_id:'12170',bag_id:'54000005',order_id:'FY6980CC0033445570',transaction_type:'Sale',mrp:'2400',esp:'1200',net_payout:'1100',utr:'_ATH00105',payment_date:'2025-09-10',payout_id:'12170_OE_COD_AC_SD_003_FY26'},
+  ],
+  settled_claims: [
+    // Kaya - 3557
+    {company_id:'3557',order_id:'FY658643D90E0771BE56',claimable_amt:'1650',payout_id:'3557_OE_COD_AC_SD_172_FY25',utr:'_415018308326',payment_date:'2024-05-29'},
+    {company_id:'3557',order_id:'FY647242CE0F28078D5D',claimable_amt:'553',payout_id:'3557_OE_COD_AC_SD_040_FY24',utr:'_324315847879',payment_date:'2023-08-31'},
+    // ZION - 10549
+    {company_id:'10549',order_id:'FY695B6BA5017D466F',claimable_amt:'399',payout_id:'10549_OE_COD_AC_SD_001_FY26',utr:'_ZN009901',payment_date:'2026-01-15'},
+    // Atha Fashion - 12170
+    {company_id:'12170',order_id:'FY6980CC0033445560',claimable_amt:'2400',payout_id:'12170_OE_COD_AC_SD_001_FY26',utr:'_ATH00901',payment_date:'2025-08-20'},
+    {company_id:'12170',order_id:'FY6980CC0033445561',claimable_amt:'999',payout_id:'12170_OE_COD_AC_SD_002_FY26',utr:'_ATH00902',payment_date:'2025-09-01'},
+  ],
+};
+
+function getDemoData(tab) {
+  return DEMO_DB[tab] || [];
+}
+</script>
+</body>
+</html>
